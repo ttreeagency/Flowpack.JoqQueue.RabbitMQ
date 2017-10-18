@@ -82,7 +82,7 @@ class RabbitQueue implements QueueInterface
     public function submit($payload, array $options = [])
     {
         $message = new AMQPMessage(json_encode($payload));
-        $this->channel->basic_publish($message);
+        $this->channel->basic_publish($message, '', $this->name);
         return '';
     }
 
