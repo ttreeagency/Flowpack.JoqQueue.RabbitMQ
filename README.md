@@ -21,10 +21,10 @@ Flowpack:
           className: 'Flowpack\JobQueue\RabbitMQ\RabbitQueue'
           executeIsolated: true
           options:
-          	passive: false
-          	durable: false
-          	exclusive: false
-          	autoDelete: false
+            passive: false
+            durable: false
+            exclusive: false
+            autoDelete: false
             client:
               host: localhost
               port: 5672
