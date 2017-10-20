@@ -60,6 +60,8 @@ class RabbitQueue implements QueueInterface
         $this->connection = new AMQPStreamConnection($host, $port, $username, $password, $vhost, $insist, $loginMethod, null, 'en_US', $this->defaultTimeout, $this->defaultTimeout);
         $this->channel = $this->connection->channel();
 
+        $this->channel->basic_qos(null, 1, null);
+
         $passive = isset($options['passive']) ? (bool)$options['passive'] : false;
         $durable = isset($options['durable']) ? (bool)$options['durable'] : false;
         $exclusive = isset($options['exclusive']) ? (bool)$options['exclusive'] : false;
