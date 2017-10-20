@@ -62,6 +62,18 @@ class RabbitQueue implements QueueInterface
 
         $this->channel->basic_qos(null, 1, null);
 
+        if (isset($options['exchange']) && \is_array($options['exchange'])) {
+            $exchangeOptions = $options['exchange'];
+            $this->channel->exchange_declare(
+                $exchangeOptions['name'],
+                isset($exchangeOptions['type']) ? $exchangeOptions['type'] : 'direct',
+                isset($exchangeOptions['passive']) ? (bool)$exchangeOptions['passive'] : false,
+                isset($exchangeOptions['durable']) ? (bool)$exchangeOptions['durable'] : false,
+                isset($exchangeOptions['autoDelete']) ? (bool)$exchangeOptions['autoDelete'] : false
+            );
+            $this->channel->queue_bind($this->name, $exchangeOptions['name']);
+        }
+
         $passive = isset($options['passive']) ? (bool)$options['passive'] : false;
         $durable = isset($options['durable']) ? (bool)$options['durable'] : false;
         $exclusive = isset($options['exclusive']) ? (bool)$options['exclusive'] : false;

@@ -19,16 +19,28 @@ Flowpack:
       queues:
         'some-queue':
           className: 'Flowpack\JobQueue\RabbitMQ\RabbitQueue'
+          
           executeIsolated: true
+          
           options:
             passive: false
             durable: false
             exclusive: false
             autoDelete: false
+            
+            # optional exchange configuration
+            exchange: 
+              name: 'elastic_indexing'
+              type: 'direct'
+              passive: false
+              durable: true
+              autoDelete: false
+              
             client:
               host: localhost
               port: 5672
               username: guest
               password: guest
               vhost: '/'
+              
             defaultTimeout: 3.0
