@@ -95,9 +95,7 @@ class RabbitQueue implements QueueInterface
      */
     public function submit($payload, array $options = [])
     {
-        $message = new AMQPMessage(json_encode($payload));
-        $this->channel->basic_publish($message, '', $this->name);
-        return '';
+        return $this->queue($payload, $options);
     }
 
     /**
@@ -105,18 +103,7 @@ class RabbitQueue implements QueueInterface
      */
     public function waitAndTake($timeout = null)
     {
-        $timeStart = microtime(true);
-        do {
-            /** @var AMQPMessage|null $message */
-            $message = $this->channel->basic_get($this->name, true);
-            $timeSpent = microtime(true) - $timeStart;
-        } while ($timeSpent > $timeout && $message === null);
-
-        if ($message === null) {
-            return null;
-        }
-
-        return new Message((string)$message->delivery_info['delivery_tag'], json_decode($message->body, true));
+        return $this->dequeue(true, $timeout);
     }
 
     /**
@@ -124,18 +111,7 @@ class RabbitQueue implements QueueInterface
      */
     public function waitAndReserve($timeout = null)
     {
-        $timeStart = microtime(true);
-        do {
-            /** @var AMQPMessage|null $message */
-            $message = $this->channel->basic_get($this->name, false);
-            $timeSpent = microtime(true) - $timeStart;
-        } while ($timeSpent > $timeout && $message === null);
-
-        if ($message === null) {
-            return null;
-        }
-
-        return new Message((string)$message->delivery_info['delivery_tag'], json_decode($message->body, true));
+        return $this->dequeue(false, $timeout);
     }
 
     /**
@@ -195,5 +171,41 @@ class RabbitQueue implements QueueInterface
     public function flush()
     {
         $this->channel->queue_purge($this->name);
+    }
+
+
+    public function shutdownObject()
+    {
+        $this->channel->close();
+        $this->connection->close();
+    }
+
+    protected function queue($payload, array $options = [])
+    {
+        $correlationIdentifier = \uniqid('', true);
+        $message = new AMQPMessage(json_encode($payload), [
+            'correlation_identifier' => $correlationIdentifier
+        ]);
+        $this->channel->basic_publish($message, '', $this->name);
+        return $correlationIdentifier;
+    }
+
+    protected function dequeue($ack = true, $timeout = null)
+    {
+        $cache = null;
+        $consumerTag = $this->channel->basic_consume($this->name, '', false, false, false, false, function (AMQPMessage $message) use(&$cache, $ack) {
+            $deliveryTag = (string)$message->delivery_info['delivery_tag'];
+            if ($ack) {
+                $this->channel->basic_ack($deliveryTag);
+            }
+            $cache = new Message($deliveryTag, json_decode($message->body, true));
+        });
+
+        while ($cache === null) {
+            $this->channel->wait(null, false, $timeout ?: 0);
+        }
+
+        $this->channel->basic_cancel($consumerTag);
+        return $cache;
     }
 }
