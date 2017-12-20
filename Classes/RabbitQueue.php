@@ -11,6 +11,7 @@ use Neos\Flow\Annotations as Flow;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use PhpAmqpLib\Wire\AMQPTable;
 
 /**
  * A queue implementation using RabbitMQ as the queue backend
@@ -78,8 +79,9 @@ class RabbitQueue implements QueueInterface
         $durable = isset($options['durable']) ? (bool)$options['durable'] : false;
         $exclusive = isset($options['exclusive']) ? (bool)$options['exclusive'] : false;
         $autoDelete = isset($options['autoDelete']) ? (bool)$options['autoDelete'] : false;
+        $arguments = isset($options['arguments']) ? new AMQPTable($options['arguments']) : null;
 
-        $this->channel->queue_declare($this->name, $passive, $durable, $exclusive, $autoDelete);
+        $this->channel->queue_declare($this->name, $passive, $durable, $exclusive, $autoDelete, false, $arguments);
     }
 
     /**
