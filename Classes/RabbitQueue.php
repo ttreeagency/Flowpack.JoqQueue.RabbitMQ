@@ -200,9 +200,10 @@ class RabbitQueue implements QueueInterface
     protected function queue($payload, array $options = [])
     {
         $correlationIdentifier = \uniqid('', true);
-        $message = new AMQPMessage(json_encode($payload), [
-            'correlation_identifier' => $correlationIdentifier
-        ]);
+
+        $mergedOptions = array_merge($options, ['correlation_id' => $correlationIdentifier]);
+
+        $message = new AMQPMessage(json_encode($payload), $mergedOptions);
         $this->channel->basic_publish($message, '', $this->name);
         return $correlationIdentifier;
     }
