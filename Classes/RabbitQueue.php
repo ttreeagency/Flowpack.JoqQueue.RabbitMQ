@@ -87,7 +87,7 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -95,7 +95,7 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function submit($payload, array $options = [])
+    public function submit($payload, array $options = []): string
     {
         return $this->queue($payload, $options);
     }
@@ -103,7 +103,7 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function waitAndTake($timeout = null)
+    public function waitAndTake(?int $timeout = null): ?Message
     {
         return $this->dequeue(true, $timeout);
     }
@@ -111,7 +111,7 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function waitAndReserve($timeout = null)
+    public function waitAndReserve(?int $timeout = null): ?Message
     {
         return $this->dequeue(false, $timeout);
     }
@@ -119,7 +119,7 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function release($messageId, array $options = [])
+    public function release($messageId, array $options = []): void
     {
         throw new Exception('Not implemented');
     }
@@ -127,7 +127,7 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function abort($messageId)
+    public function abort($messageId): void
     {
         $this->channel->basic_nack($messageId);
     }
@@ -135,9 +135,10 @@ class RabbitQueue implements QueueInterface
     /**
      * @inheritdoc
      */
-    public function finish($messageId)
+    public function finish($messageId): bool
     {
         $this->channel->basic_ack($messageId);
+        return true;
     }
 
     /**
@@ -146,7 +147,7 @@ class RabbitQueue implements QueueInterface
      *
      * @throws JobQueueException
      */
-    public function peek($limit = 1)
+    public function peek($limit = 1): array
     {
         throw new Exception('Not implemented');
     }
@@ -162,15 +163,29 @@ class RabbitQueue implements QueueInterface
     /**
      * @return void
      */
-    public function setUp()
+    public function setUp(): void
     {
+    }
 
+    public function countReady(): int
+    {
+        return 0;
+    }
+
+    public function countFailed(): int
+    {
+        return 0;
+    }
+
+    public function countReserved(): int
+    {
+        return 0;
     }
 
     /**
      * @inheritdoc
      */
-    public function flush()
+    public function flush(): void
     {
         $this->channel->queue_purge($this->name);
     }
@@ -195,7 +210,7 @@ class RabbitQueue implements QueueInterface
     protected function dequeue($ack = true, $timeout = null)
     {
         $cache = null;
-        $consumerTag = $this->channel->basic_consume($this->name, '', false, false, false, false, function (AMQPMessage $message) use(&$cache, $ack) {
+        $consumerTag = $this->channel->basic_consume($this->name, '', false, false, false, false, function (AMQPMessage $message) use (&$cache, $ack) {
             $deliveryTag = (string)$message->delivery_info['delivery_tag'];
             if ($ack) {
                 $this->channel->basic_ack($deliveryTag);
