@@ -206,6 +206,11 @@ class RabbitQueue implements QueueInterface
 
         $mergedOptions = array_merge($options, ['correlation_id' => $correlationIdentifier]);
 
+        // Check for delay option
+        if (array_key_exists('delay', $options)) {
+            $mergedOptions['application_header'] = new AMQPTable(["x-delay" => $options['delay']]);
+        }
+
         $message = new AMQPMessage(json_encode($payload), $mergedOptions);
         $this->channel->basic_publish($message, '', $this->name);
         return $correlationIdentifier;
