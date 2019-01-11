@@ -70,7 +70,10 @@ class RabbitQueue implements QueueInterface
                 isset($exchangeOptions['type']) ? $exchangeOptions['type'] : 'direct',
                 isset($exchangeOptions['passive']) ? (bool)$exchangeOptions['passive'] : false,
                 isset($exchangeOptions['durable']) ? (bool)$exchangeOptions['durable'] : false,
-                isset($exchangeOptions['autoDelete']) ? (bool)$exchangeOptions['autoDelete'] : false
+                isset($exchangeOptions['autoDelete']) ? (bool)$exchangeOptions['autoDelete'] : false,
+                isset($exchangeOptions['internal']) ? (bool)$exchangeOptions['internal'] : false,
+                isset($exchangeOptions['noWait']) ? (bool)$exchangeOptions['noWait'] : false,
+                isset($exchangeOptions['arguments']) ? new AMQPTable($exchangeOptions['arguments']) : null
             );
             $this->channel->queue_bind($this->name, $exchangeOptions['name']);
         }
